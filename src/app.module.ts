@@ -19,7 +19,7 @@ import { BannerModule } from './banner/banner.module';
       database: 'kmutnb-db',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: false, // ⚠️ เปลี่ยนเป็น false เพื่อป้องกันข้อมูลหาย!
-      logging: true, // เพิ่มการ log SQL queries เพื่อ debug
+      logging: false, // เพิ่มการ log SQL queries เพื่อ debug
     }),
     UserModule,
     ItemModule,
