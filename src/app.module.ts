@@ -18,7 +18,8 @@ import { BannerModule } from './banner/banner.module';
       password: '123456',
       database: 'kmutnb-db',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true,
+      synchronize: false, // ⚠️ เปลี่ยนเป็น false เพื่อป้องกันข้อมูลหาย!
+      logging: true, // เพิ่มการ log SQL queries เพื่อ debug
     }),
     UserModule,
     ItemModule,

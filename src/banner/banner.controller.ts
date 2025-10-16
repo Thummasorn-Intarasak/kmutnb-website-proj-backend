@@ -1,4 +1,21 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
+  UseInterceptors,
+  UploadedFile,
+  ParseIntPipe,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { BannerService } from './banner.service';
 import { CreateBannerDto } from './dto/create-banner.dto';
 import { UpdateBannerDto } from './dto/update-banner.dto';
@@ -28,7 +45,10 @@ export class BannerController {
 
   // อัปเดต banner
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateBannerDto: UpdateBannerDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateBannerDto: UpdateBannerDto,
+  ) {
     return this.bannerService.update(+id, updateBannerDto);
   }
 
@@ -39,9 +59,36 @@ export class BannerController {
     return this.bannerService.remove(+id);
   }
 
-  // เปลี่ยนสถานะ banner
-  @Put(':id/toggle')
-  async toggleActive(@Param('id') id: string) {
-    return this.bannerService.toggleActive(+id);
+  // อัปโหลดรูปภาพ banner
+  @Patch(':id/upload-image')
+  @UseInterceptors(
+    FileInterceptor('banner_image', {
+      storage: diskStorage({
+        destination: './uploads/banners',
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          const filename = `banner-${uniqueSuffix}${ext}`;
+          callback(null, filename);
+        },
+      }),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // จำกัดขนาดไฟล์ที่ 10MB
+      },
+      fileFilter: (req, file, callback) => {
+        // อนุญาตเฉพาะไฟล์รูปภาพ
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+          return callback(new Error('Only image files are allowed!'), false);
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  uploadImage(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.bannerService.updateBannerImageURL(id, file.filename);
   }
 }

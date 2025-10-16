@@ -1,37 +1,27 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { Item } from '../item/item.entity';
 
 @Entity({ name: 'banner' })
 export class Banner {
   @PrimaryGeneratedColumn()
-  id: number;
+  banner_id: number;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
-  title: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  subtitle: string;
-
-  @Column({ type: 'text', nullable: true })
-  description: string;
+  banner_name: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  image: string;
+  banner_image: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  buttonText: string;
+  @Column({ type: 'int', nullable: false })
+  game_id: number;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  buttonColor: string;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  titleColor: string;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  backgroundColor: string;
-
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
-
-  @Column({ type: 'int', default: 0 })
-  sortOrder: number;
+  @ManyToOne(() => Item, { eager: true })
+  @JoinColumn({ name: 'game_id' })
+  game: Item;
 }

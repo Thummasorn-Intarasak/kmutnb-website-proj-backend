@@ -1,12 +1,5 @@
 export class CreateBannerDto {
-  title: string;
-  subtitle?: string;
-  description?: string;
-  image?: string;
-  buttonText?: string;
-  buttonColor?: string;
-  titleColor?: string;
-  backgroundColor?: string;
-  isActive?: boolean;
-  sortOrder?: number;
+  banner_name: string;
+  banner_image?: string;
+  game_id: number;
 }

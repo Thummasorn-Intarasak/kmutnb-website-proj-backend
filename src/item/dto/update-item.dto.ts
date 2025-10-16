@@ -1,6 +1,6 @@
 export class UpdateItemDto {
   game_name?: string;
-  description?: string;
-  price?: number;
+  game_description?: string;
+  game_price?: number;
   game_image?: string;
 }

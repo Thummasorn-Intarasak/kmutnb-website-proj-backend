@@ -13,14 +13,17 @@ export class BannerService {
   // ดึงข้อมูล banner ทั้งหมด
   async findAll(): Promise<Banner[]> {
     return this.bannerRepository.find({
-      where: { isActive: true },
-      order: { sortOrder: 'ASC' },
+      relations: ['game'],
+      order: { banner_id: 'ASC' },
     });
   }
 
   // หา banner ตาม ID
   async findOne(id: number): Promise<Banner> {
-    const banner = await this.bannerRepository.findOneBy({ id });
+    const banner = await this.bannerRepository.findOne({
+      where: { banner_id: id },
+      relations: ['game'],
+    });
     if (!banner) {
       throw new NotFoundException(`Banner with id ${id} not found`);
     }
@@ -29,16 +32,9 @@ export class BannerService {
 
   // สร้าง banner ใหม่
   async create(createBannerDto: {
-    title: string;
-    subtitle?: string;
-    description?: string;
-    image?: string;
-    buttonText?: string;
-    buttonColor?: string;
-    titleColor?: string;
-    backgroundColor?: string;
-    isActive?: boolean;
-    sortOrder?: number;
+    banner_name: string;
+    banner_image?: string;
+    game_id: number;
   }): Promise<Banner> {
     const banner = this.bannerRepository.create(createBannerDto);
     return this.bannerRepository.save(banner);
@@ -48,16 +44,9 @@ export class BannerService {
   async update(
     id: number,
     updateBannerDto: {
-      title?: string;
-      subtitle?: string;
-      description?: string;
-      image?: string;
-      buttonText?: string;
-      buttonColor?: string;
-      titleColor?: string;
-      backgroundColor?: string;
-      isActive?: boolean;
-      sortOrder?: number;
+      banner_name?: string;
+      banner_image?: string;
+      game_id?: number;
     },
   ): Promise<Banner> {
     const banner = await this.findOne(id);
@@ -71,10 +60,20 @@ export class BannerService {
     await this.bannerRepository.remove(banner);
   }
 
-  // เปลี่ยนสถานะ banner
-  async toggleActive(id: number): Promise<Banner> {
-    const banner = await this.findOne(id);
-    banner.isActive = !banner.isActive;
+  // อัปเดต URL รูปภาพของ banner
+  async updateBannerImageURL(id: number, filename: string): Promise<Banner> {
+    const banner = await this.bannerRepository.findOneBy({ banner_id: id });
+    if (!banner) {
+      throw new NotFoundException(`Banner with ID ${id} not found`);
+    }
+
+    // สร้าง path สำหรับรูป
+    const imagePath = `uploads/banners/${filename}`;
+
+    // นำ path ไปอัปเดตในคอลัมน์ banner_image
+    banner.banner_image = imagePath;
+
+    // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
     return this.bannerRepository.save(banner);
   }
 }
