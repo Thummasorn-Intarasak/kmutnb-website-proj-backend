@@ -19,4 +19,7 @@ export class User {
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
   balance: number;
+
+  @Column({ type: 'varchar', length: 20, default: 'user' })
+  role: string; // 'user' หรือ 'admin'
 }

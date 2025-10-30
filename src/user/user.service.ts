@@ -20,8 +20,9 @@ export class UserService {
     username: string;
     email: string;
     password: string;
+    role?: string;
   }): Promise<User> {
-    const { username, email, password } = createUserDto;
+    const { username, email, password, role } = createUserDto;
 
     // ตรวจสอบว่ามี username หรือ email ซ้ำหรือไม่
     const existingUser = await this.userRepository.findOne({
@@ -39,6 +40,7 @@ export class UserService {
       username,
       email,
       password: hashedPassword,
+      role: role || 'user', // default เป็น 'user' ถ้าไม่ระบุ
     });
 
     return this.userRepository.save(user);
@@ -82,6 +84,7 @@ export class UserService {
       username?: string;
       email?: string;
       password?: string;
+      role?: string;
     },
   ): Promise<User> {
     const user = await this.findById(id);

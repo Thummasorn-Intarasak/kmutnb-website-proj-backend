@@ -1,5 +1,9 @@
 // src/item/item.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Item } from './item.entity';
@@ -51,6 +55,17 @@ export class ItemService {
     game_price: number;
     game_image?: string;
   }): Promise<Item> {
+    // ตรวจสอบว่ามีเกมที่ชื่อซ้ำหรือไม่
+    const existingItem = await this.itemRepository.findOne({
+      where: { game_name: createItemDto.game_name },
+    });
+
+    if (existingItem) {
+      throw new ConflictException(
+        `เกมที่ชื่อ "${createItemDto.game_name}" มีอยู่ในระบบแล้ว`,
+      );
+    }
+
     const item = this.itemRepository.create(createItemDto);
     return this.itemRepository.save(item);
   }
@@ -66,6 +81,20 @@ export class ItemService {
     },
   ): Promise<Item> {
     const item = await this.findOne(id);
+
+    // ถ้ามีการเปลี่ยนชื่อ ให้เช็คว่าชื่อใหม่ซ้ำกับเกมอื่นหรือไม่
+    if (updateItemDto.game_name && updateItemDto.game_name !== item.game_name) {
+      const existingItem = await this.itemRepository.findOne({
+        where: { game_name: updateItemDto.game_name },
+      });
+
+      if (existingItem) {
+        throw new ConflictException(
+          `เกมที่ชื่อ "${updateItemDto.game_name}" มีอยู่ในระบบแล้ว`,
+        );
+      }
+    }
+
     Object.assign(item, updateItemDto);
     return this.itemRepository.save(item);
   }
