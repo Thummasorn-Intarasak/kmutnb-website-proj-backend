@@ -16,4 +16,7 @@ export class Item {
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   game_image: string;
+
+  @Column('text', { array: true, nullable: true })
+  game_tag: string[]; // เก็บเป็น text[] เช่น {"RPG","Action"}
 }
