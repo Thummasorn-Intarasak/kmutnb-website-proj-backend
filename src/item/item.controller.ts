@@ -17,6 +17,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { BadRequestException } from '@nestjs/common';
 import { ItemService } from './item.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
@@ -125,5 +126,18 @@ export class ItemController {
 
     // ส่งไฟล์ทั้งหมดไปให้ Service จัดการ
     return this.itemService.updateItemMultipleImages(id, files);
+  }
+
+  // ลบรูปเดี่ยวของเกม: DELETE /items/:id/images?imagePath=uploads/games/xxx/file.jpg
+  @Delete(':id/images')
+  removeImage(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('imagePath') imagePath: string,
+  ): Promise<any> {
+    if (!imagePath) {
+      throw new BadRequestException('imagePath is required');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return this.itemService.removeItemImage(id, imagePath);
   }
 }

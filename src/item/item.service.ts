@@ -162,7 +162,7 @@ export class ItemService {
     return this.itemRepository.save(item);
   }
 
-  // อัปเดตหลายรูปภาพของเกม (เก็บเป็น JSON string)
+  // อัปโหลดหลายรูปภาพของเกมแบบเพิ่ม (append) และเก็บเป็น JSON string
   async updateItemMultipleImages(
     id: number,
     files: Express.Multer.File[],
@@ -181,8 +181,21 @@ export class ItemService {
     // สร้าง folder ถ้ายังไม่มี
     this.ensureDirectoryExists(gameFolderPath);
 
-    // บันทึกไฟล์ทั้งหมดและเก็บ paths
-    const imagePaths: string[] = [];
+    // เริ่มจากรายการรูปเดิม หากเดิมเป็น string เดี่ยวให้แปลงเป็น array
+    const existingPaths: string[] = (() => {
+      if (!item.game_image) return [];
+      try {
+        const parsed = JSON.parse(String(item.game_image));
+        return Array.isArray(parsed)
+          ? parsed.map((p: unknown) => String(p))
+          : [];
+      } catch {
+        return [String(item.game_image)];
+      }
+    })();
+
+    // บันทึกไฟล์ทั้งหมดและเก็บ paths ใหม่
+    const newPaths: string[] = [];
 
     for (const file of files) {
       // สร้างชื่อไฟล์ใหม่
@@ -195,13 +208,48 @@ export class ItemService {
       fs.writeFileSync(filePath, file.buffer);
 
       // เก็บ path
-      imagePaths.push(`uploads/games/${gameSlug}/${filename}`);
+      newPaths.push(`uploads/games/${gameSlug}/${filename}`);
     }
 
-    // เก็บเป็น JSON string ในคอลัมน์ game_image
-    item.game_image = JSON.stringify(imagePaths);
+    // รวมเดิม + ใหม่ และเก็บเป็น JSON string ในคอลัมน์ game_image
+    const merged = [...existingPaths, ...newPaths];
+    item.game_image = JSON.stringify(merged);
 
     // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
+    return this.itemRepository.save(item);
+  }
+
+  // ลบรูปเดี่ยวออกจากเกม พร้อมลบไฟล์จริง
+  async removeItemImage(id: number, imagePath: string): Promise<Item> {
+    const item = await this.itemRepository.findOneBy({ game_id: id });
+    if (!item) {
+      throw new NotFoundException(`Item with ID ${id} not found`);
+    }
+
+    // แปลงรายการรูป
+    const current: string[] = (() => {
+      if (!item.game_image) return [];
+      try {
+        const parsed = JSON.parse(String(item.game_image));
+        return Array.isArray(parsed)
+          ? parsed.map((p: unknown) => String(p))
+          : [];
+      } catch {
+        return [String(item.game_image)];
+      }
+    })();
+
+    const updated = current.filter((p) => p !== imagePath);
+
+    // ลบไฟล์จริง ถ้ามีอยู่
+    try {
+      const fullPath = path.join('./', imagePath.replace(/^\/?/, ''));
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    } catch {}
+
+    item.game_image = JSON.stringify(updated);
     return this.itemRepository.save(item);
   }
 }
